@@ -9,5 +9,5 @@ Initial version:
 # How to Use:
 
 1) Save the original image used by .PVP without palette as .png (they will show as grayscale).
-2) Open the .png in Photoshop, change the mode into "indexed", then load the "grayscale" palette and confirm.
-3) Load your .ACT as color table
+2) Open the image in Photoshop, change color mode to "indexed" and load "grayscale" palette.
+3) Confirm and load your .ACT as "color table".
