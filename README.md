@@ -1,4 +1,4 @@
-# PVP2PAL
+# PVP2ACT
 
 Convert Dreamcast .PVP palette files into .ACT (Adobe Color Table) which can be loaded by Photoshop.
 
