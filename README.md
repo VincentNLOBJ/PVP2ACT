@@ -6,6 +6,9 @@ Initial version:
 - 565 / 555 palette support
 
 
+![Image](https://i.imgur.com/4Oadlks.gif)
+
+
 # How to Use:
 
 Before using this program, you need to properly dump the target image without any palettes loaded in. I suggest to use PVRViewer .PNG export!
