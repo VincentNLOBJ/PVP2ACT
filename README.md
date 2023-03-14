@@ -9,10 +9,11 @@ If a `.PVP` and `.PVR` file are in the same folder, the program will also export
 
 # How to Use:
 
-Open `PVP2ACT.exe` and select the `.PVP` file(s) to convert!
+1) Extract `PVP2ACT_V2.zip` content to a dedicate folder.
 
-`.ACT` files will be created in the application folder: `Extracted/ACT`
-`.png` images will be created in the application folder: `Extracted`
+2) Open `PVP2ACT.exe` and select the `.PVP` file(s) to convert!
+
+3) `.ACT` files will be created in application folder `Extracted/ACT`, `.pngs` in `Extracted` folder.
 
 
 # How to load palettes in Photoshop:
