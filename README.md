@@ -26,6 +26,6 @@ Open `PVP2ACT.exe` and select the `.PVP` file(s) to convert!
 V2.0
 
 - Support for auto 4bpp / 8bpp palette
-- PVR read (8888/4444,555,565, unwiddle, stride)
+- PVR read (8888/4444,555,565, twiddle, stride)
 - .png conversion (4bpp/8bpp)
 - Batch conversion for multiple files
