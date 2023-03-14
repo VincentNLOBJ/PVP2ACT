@@ -1,6 +1,6 @@
 # PVP2ACT v2.0
 
-Convert Dreamcast `.PVP` palette files into `.ACT` (Adobe Color Table) which can be loaded by Photoshop.
+Convert PowerVR (Dreamcast/Naomi) `.PVP` palette files into `.ACT` (Adobe Color Table) which can be loaded by Photoshop.
 
 If a `.PVP` and `.PVR` file are in the same folder, the program will also export a palettized `.png`!
 
