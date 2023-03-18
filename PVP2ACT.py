@@ -1,16 +1,14 @@
 from PIL import Image,ImagePalette
 import os
-import sys
 import easystruct as bin
 import tkinter as tk
 from tkinter import filedialog
 
 debug = False
-apply_palette = 1  # If .PVR and .PVP in same folder apply color to .png ( 0 = grayscale )
 
 def read_col(mode, color, act_buffer):
 
-    if mode == 444:
+    if mode == 4444:
         red = ((color >> 8) & 0xf) << 4
         green = ((color >> 4) & 0xf) << 4
         blue = (color & 0xf) << 4
@@ -39,7 +37,7 @@ def read_col(mode, color, act_buffer):
     if debug:
         bits = [(color >> i) & 1 for i in range(16)]
 
-        if mode == 444:
+        if mode == 4444:
             d_blue = f"{bits[0:4]}"
             d_green = f"{bits[4:8]}"
             d_red = f"{bits[8:12]}"
@@ -72,14 +70,14 @@ def read_col(mode, color, act_buffer):
 
 
 def read_pvp(f):
-    global act_buffer,ttl_entries
+    global act_buffer
 
     f.seek(0x08)
     pixel_type = bin.read_uint8_buff(f)
     if pixel_type == 1:
         mode = 565
     elif pixel_type == 2:
-        mode = 444
+        mode = 4444
     elif pixel_type == 6:
         mode = 8888
     else:
@@ -106,22 +104,21 @@ def read_pvp(f):
     return act_buffer, mode, ttl_entries
 
 
-def write_act(act_buffer, ttl_entries):
+def write_act(act_buffer):
 
     with open((app_dir + '\Extracted\ACT/' + file_name[:-4] + ".ACT"), 'w+b') as n:
-        print(app_dir + '\Extracted\ACT/' + file_name[:-4] + ".ACT")
+        if debug:(app_dir + '\Extracted\ACT/' + file_name[:-4] + ".ACT")
 
         # Pad file with 0x00 if 16-color palette
 
-        if ttl_entries == 16:
-            act_file = act_buffer+bytes(b'\x00' * 0x2d0)
-        else: act_file=act_buffer
-
+        if len(act_buffer) < 768:
+            act_file = bytes(act_buffer) + bytes(b'\x00' * (768 - len(act_buffer)))
+        else:
+            act_file = bytes(act_buffer)
         n.write(act_file)
 
 
-def decode_pvr(f,w, h, pos=None,px_format=None):
-    global cur_file
+def decode_pvr(f,w, h, offset=None,px_format=None):
 
     # Initialize variables
 
@@ -190,7 +187,6 @@ def decode_pvr(f,w, h, pos=None,px_format=None):
 
         # define the vertical row of image pixel array:
         v_arr = [int(x / 2) for x in h_arr]
-        #print(v_arr)
 
         # Repeat vertical array block from last value of array * h/w ratio
         for i in range(ratio):
@@ -221,14 +217,16 @@ def decode_pvr(f,w, h, pos=None,px_format=None):
 
     # open the file a.pvr and read every byte according to the list
 
-    f.seek(pos)
+    f.seek(offset)
     data = bytearray()
 
     if px_format == 7 or px_format == 8:  # 8bpp
+        palette_entries = 256
         pixels = bytes(f.read(w*h)) # read only required amount of bytes
 
     else:  # 4bpp , convert to 8bpp
 
+        palette_entries = 16
         pixels = bytes(f.read(w * h // 2)) # read only required amount of bytes
         for i in range (len(pixels)):
             data.append(((pixels[i]) & 0x0f)*0x11)   # last 4 bits
@@ -250,7 +248,7 @@ def decode_pvr(f,w, h, pos=None,px_format=None):
     else:
         new_palette = ''
 
-    if ttl_entries == 16:
+    if palette_entries == 16:
 
         img = img.convert('RGB')
         img = img.convert('L', colors=16)
@@ -271,7 +269,6 @@ def decode_pvr(f,w, h, pos=None,px_format=None):
             img.getpalette()
             img.putpalette(new_palette)
 
-        #img.show()
         # save the image
         img.save((app_dir + '\Extracted/' + file_name[:-4] + ".png"),bits=4)
 
@@ -295,81 +292,150 @@ def decode_pvr(f,w, h, pos=None,px_format=None):
 
 def load_pvr(PVR_file):
 
-    with open(PVR_file, 'rb') as f:
-        header_data = f.read()
-        offset = header_data.find(b"PVRT")
-        if offset != -1 or len(header_data) < 0x10:
-            print("Position of 'PVRT' text:", offset)
-            offset += 0x10
-            f.seek(offset - 0x4)
-            w = int.from_bytes(f.read(2), byteorder='little')
-            h = int.from_bytes(f.read(2), byteorder='little')
+    try:
+        with open(PVR_file, 'rb') as f:
+            header_data = f.read()
+            offset = header_data.find(b"PVRT")
+            if offset != -1 or len(header_data) < 0x10:
+                if debug: print("Position of 'PVRT' text:", offset)
+                offset += 0x10
+                f.seek(offset - 0x4)
+                w = int.from_bytes(f.read(2), byteorder='little')
+                h = int.from_bytes(f.read(2), byteorder='little')
 
-            f.seek(offset - 0x7)
-            pal_modes = {
-                5: 'Pal4 (16-col)',
-                6: 'Pal4 + Mips (16-col)',
-                7: 'Pal8 (256-col)',
-                8: 'Pal8 + Mips (256-col)',
-                11: 'Stride',
-            }
-            px_format = int.from_bytes(f.read(1), byteorder='little')
+                f.seek(offset - 0x7)
+                pal_modes = {
+                    5: 'Pal4 (16-col)',
+                    6: 'Pal4 + Mips (16-col)',
+                    7: 'Pal8 (256-col)',
+                    8: 'Pal8 + Mips (256-col)',
+                    11: 'Stride',
+                }
+                px_format = int.from_bytes(f.read(1), byteorder='little')
 
-            if px_format not in pal_modes or h > 1024 or w > 1024:
-                print("Invalid Palettized PVR!")
+                if px_format not in pal_modes or h > 1024 or w > 1024:
+                    if debug: print(PVR_file, "Invalid Palettized PVR!")
+                else:
+                    if debug: print('size:', w, 'x', h, 'format:', pal_modes[px_format])
+                    if px_format == 6 or px_format == 8:
+                        if debug: print('mip-maps!')
+
+                        mip_size = [0x20, 0x80, 0x200, 0x800, 0x2000, 0x8000, 0x20000, 0x80000]
+                        pvr_dim = [4, 8, 16, 32, 64, 128, 256, 512, 1024]
+                        extra_mip = {6: 0xc, 8: 0x17}  # smallest mips fixed size
+                        size_adjust = {6: 1, 8: 2}  # 8bpp size is 4bpp *2
+
+                        for i in range(len(pvr_dim)):
+                            if pvr_dim[i] == w:
+                                mip_index = i - 1
+                                break
+
+                        # Skip mips for image data offset
+                        mip_sum = (sum(mip_size[:mip_index]) * size_adjust[px_format]) + (extra_mip[px_format])
+                        offset += mip_sum
+
+                    decode_pvr(f, w, h, offset, px_format)  # file, width, height, image data offset
             else:
-                print('size:', w, 'x', h, 'format:', pal_modes[px_format])
-                decode_pvr(f, w, h, offset,px_format)    # file, width, height, image data offset
-        else:
-            print("'PVRT' header not found!")
+                if debug: print("'PVRT' header not found!")
+
+    except: print(f'PVR data error! {PVR_file}')
+
+
+def load_pvp(PVP_file):
+
+    try:
+        with open(PVP_file, 'rb') as f:
+            file_size = len(f.read())
+            f.seek(0x0)
+            PVP_check = f.read(4)
+
+            if PVP_check == b'PVPL' and file_size > 0x10:  # PVPL header and size is OK!
+                act_buffer, mode, ttl_entries = read_pvp(f)
+                write_act(act_buffer)
+            else:
+                print('Invalid .PVP file!')  # Skip this file
+    except:
+         print(f'PVP data error! {PVP_file}')
 
 
 def main():
-    global cur_file,app_dir,file_name
+    global app_dir,file_name,apply_palette
 
     # Use Tkinter file selector to load .PVP files
 
     root = tk.Tk()
     root.withdraw()
 
-    my_file = filedialog.askopenfilenames(initialdir=".", title="Select one or more .PVP to convert",
-                                          filetypes=[(".PVP", ".pvp")])
+    my_file = filedialog.askopenfilenames(
+        initialdir=".",
+        title="Select palette .PVP and/or palettized .PVR to convert",
+        filetypes=[(".pvp .pvr files", ".PV*")]
+    )
 
-    # Loop start
+    # remove companion .PVP/.PVR, filter the list
+
+    new_list = []
+    for item in my_file:
+        key = item[:-4]
+        if not any(key == x[:-4] for x in new_list):
+            new_list.append(item)
+    my_file = new_list
 
     selected_files = len(my_file)
     current_file = 0
+
+    # create Extracted\ACT folders
     app_dir = os.path.abspath(os.path.join(os.getcwd()))
-    print(app_dir+'\Extracted\ACT')
+    if debug:print(app_dir+'\Extracted\ACT')
 
     if not os.path.exists(app_dir+'\Extracted\ACT'):
         os.makedirs(app_dir+'\Extracted\ACT')
+
+    # -----------
+    # Loop start
+    # -----------
 
     while current_file < selected_files:  # Process all selected files in the list
         if my_file:  # if at least one file selected
             cur_file = my_file[current_file]
             dir_path, file_name = os.path.split(cur_file)
+            filetype = cur_file[-4:]
+            PVR_file = cur_file[:-4] + '.pvr'  # If .PVR file exists in the same folder
+            PVP_file = cur_file[:-4] + '.pvp'  # If .PVP file exists in the same folder
 
-            PVR_file = cur_file[:-4] + '.pvr' # If .PVR file exists in the same folder
+            if debug:print('filetype:',filetype)
+
+            # If cur_file is a .PVP
+            if filetype == ".pvp" or filetype == ".PVP":
+                load_pvp(PVP_file)
+
+                if os.path.exists(PVR_file):
+                    apply_palette = 1
+                    load_pvr(PVR_file)
+
+                    if debug:print('companion PVR exist!')
+
+                else:
+                    apply_palette = 0
+                    if debug:print('Only convert PVP to ACT!')
+
+
+            # If cur_file is a .PVR
+            elif filetype == ".pvr" or filetype == ".PVR":
+
+                if os.path.exists(PVP_file):
+                    if debug:print('companion PVP exist!')
+                    apply_palette = 1
+                    load_pvp(PVP_file)
+
+                else:
+                    apply_palette = 0
+                    if debug:print('Only convert PVR to grayscale .png!')
+
+                load_pvr(PVR_file)
+
+            current_file += 1
 
             if debug:print(cur_file)
-
-            #print(PVR_file)
-
-            with open(cur_file, 'rb') as f:
-                file_size =len(f.read())
-                f.seek(0x0)
-                PVP_check = f.read(4)
-
-                if PVP_check == b'PVPL' and file_size >0x10: # PVPL header and size is OK!
-                    act_buffer, mode, ttl_entries = read_pvp(f)
-                    write_act(act_buffer, ttl_entries)
-
-                    if os.path.exists(PVR_file):
-                        if debug: print(".pvr file in the same directory!")
-                        load_pvr(PVR_file)
-                else:
-                    print('Invalid .PVP file!')  # Skip this file
-                current_file += 1
 
 main()
