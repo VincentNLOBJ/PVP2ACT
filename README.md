@@ -19,7 +19,7 @@ If `.PVP` and `.PVR` files are in the same folder, `.png` will have palette colo
 # How to manually load .ACT palettes in Photoshop:
 
 1) Open the `.png` image
-2) Method --> Color Table, load your `.ACT`
+2) Image --> Method --> Color Table, load your `.ACT`
 
 
 # Changelog:
