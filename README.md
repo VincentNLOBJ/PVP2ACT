@@ -25,7 +25,7 @@ If `.PVP` and `.PVR` files are in the same folder, `.png` will have palette colo
 
 1) Open the `.png` image
 2) Windows --> Dockable Dialogs --> Palettes
-3) In "Palettes" dialog box, click "Import Palette" button and select the .ACT you want to use.
+3) In "Palettes" dialog box, click "Import Palette" button and select the `.ACT` you want to use.
 4) Colors --> Map --> Set Colormap, choose the palette and click OK.
 
 # Changelog:
