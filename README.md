@@ -28,6 +28,10 @@ If `.PVP` and `.PVR` files are in the same folder, `.png` will have palette colo
 3) In "Palettes" dialog box, click "Import Palette" button and select the `.ACT` you want to use.
 4) Colors --> Map --> Set Colormap, choose the palette and click OK.
 
+# Tutorial:
+
+https://www.youtube.com/watch?v=png1ycQuobI
+
 # Changelog:
 
 V2.1
