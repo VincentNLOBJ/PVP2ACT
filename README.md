@@ -32,16 +32,8 @@ If `.PVP` and `.PVR` files are in the same folder, `.png` will have palette colo
 
 https://www.youtube.com/watch?v=png1ycQuobI
 
-# Changelog:
+# Support:
 
-V2.1
-
-- .PVR Pal4 / Pal8 mips support
-- File dialog selection for multiple .PVR / .PVP at once
-- If a palettized .PVR doesn't have .PVP in same folder, will save it as grayscale png.
-
-V2.0
-- Support for auto 4bpp / 8bpp palette
-- PVR read (8888/4444,555,565, twiddle, stride)
-- .png conversion (4bpp/8bpp)
-- Batch conversion for multiple files
+If you like my work or just want to show some love:
+https://ko-fi.com/vincentnl
+https://www.patreon.com/VincentNL
